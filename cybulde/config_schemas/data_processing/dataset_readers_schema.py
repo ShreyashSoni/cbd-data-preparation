@@ -19,26 +19,26 @@ class DatasetReaderConfig:
 
 @dataclass
 class GHCDatsetReaderConfig(DatasetReaderConfig):
-    _target_: str = "cybulde.data_processing.dataset_readers.GHCDatasetReader"
+    _target_: str = "cybulde.data_processing.data_readers.GHCDatasetReader"
     dev_split_ratio: float = MISSING
 
 
 @dataclass
 class JigsawToxicCommentsDatasetReaderConfig(DatasetReaderConfig):
-    _target_: str = "cybulde.data_processing.dataset_readers.JigsawToxicCommentsDatasetReader"
+    _target_: str = "cybulde.data_processing.data_readers.JigsawToxicCommentsDatasetReader"
     dev_split_ratio: float = MISSING
 
 
 @dataclass
 class TwitterDatasetReaderConfig(DatasetReaderConfig):
-    _target_: str = "cybulde.data_processing.dataset_readers.TwitterDatasetReader"
+    _target_: str = "cybulde.data_processing.data_readers.TwitterDatasetReader"
     dev_split_ratio: float = MISSING
     test_split_ratio: float = MISSING
 
 
 @dataclass
 class DatasetReaderManagerConfig:
-    _target_: str = "cybulde.data_processing.dataset_readers.DatasetReaderManager"
+    _target_: str = "cybulde.data_processing.data_readers.DatasetReaderManager"
     dataset_readers: dict[str, DatasetReaderConfig] = MISSING
     repartition: bool = True
     available_memory: Optional[float] = None
