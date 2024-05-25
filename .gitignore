@@ -135,5 +135,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Raw data
+# Raw data and creds
 data/
+creds/
