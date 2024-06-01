@@ -5,6 +5,8 @@ services:
     image: cbd-data-preparation
     platform: linux/amd64
     container_name: cbd-data-preparation-container
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=./creds/mlops-422011-b25b04c56524.json
     build:
       context: .
       dockerfile: ./docker/Dockerfile
