@@ -1,0 +1,104 @@
+version: v3
+data_local_save_dir: ./data/raw
+dvc_remote_repo: https://github.com/ShreyashSoni/cbd_data.git
+dvc_data_folder: data/raw
+github_user_name: ShreyashSoni
+github_access_token_secret_id: cbd-data-github-access-token
+infrastructure:
+  project_id: mlops-422011
+  zone: asia-south1-c
+  network: default
+dataset_reader_manager:
+  _target_: cybulde.data_processing.data_readers.DatasetReaderManager
+  dataset_readers:
+    ghc:
+      _target_: cybulde.data_processing.data_readers.GHCDatasetReader
+      dataset_dir: ./data/raw/ghc
+      dataset_name: ghc
+      gcp_project_id: mlops-422011
+      gcp_github_access_token_secret_id: cbd-data-github-access-token
+      dvc_remote_repo: https://github.com/ShreyashSoni/cbd_data.git
+      github_user_name: ShreyashSoni
+      version: v3
+      dev_split_ratio: 0.3
+    jtc:
+      _target_: cybulde.data_processing.data_readers.JigsawToxicCommentsDatasetReader
+      dataset_dir: ./data/raw/jigsaw-toxic-comments
+      dataset_name: jtc
+      gcp_project_id: mlops-422011
+      gcp_github_access_token_secret_id: cbd-data-github-access-token
+      dvc_remote_repo: https://github.com/ShreyashSoni/cbd_data.git
+      github_user_name: ShreyashSoni
+      version: v3
+      dev_split_ratio: 0.03
+    twitter:
+      _target_: cybulde.data_processing.data_readers.TwitterDatasetReader
+      dataset_dir: ./data/raw/twitter
+      dataset_name: twitter
+      gcp_project_id: mlops-422011
+      gcp_github_access_token_secret_id: cbd-data-github-access-token
+      dvc_remote_repo: https://github.com/ShreyashSoni/cbd_data.git
+      github_user_name: ShreyashSoni
+      version: v3
+      dev_split_ratio: 0.125
+      test_split_ratio: 0.1
+  repartition: true
+  available_memory: 4000000000.0
+dataset_cleaner_manager:
+  _target_: cybulde.data_processing.data_cleaners.DatasetCleanerManager
+  dataset_cleaners:
+    stop_words:
+      _target_: cybulde.data_processing.data_cleaners.StopWordsDatasetCleaner
+    to_lower_case:
+      _target_: cybulde.data_processing.data_cleaners.ToLowerCaseDatasetCleaner
+    url:
+      _target_: cybulde.data_processing.data_cleaners.URLDatasetCleaner
+    punctuation:
+      _target_: cybulde.data_processing.data_cleaners.PunctuationDatasetCleaner
+      punctuation: '!"#$%&''()*+,-./:;<=>?@[\]^_`{|}~'
+    non_letters:
+      _target_: cybulde.data_processing.data_cleaners.NonLettersDatasetCleaner
+    new_line:
+      _target_: cybulde.data_processing.data_cleaners.NewLineCharacterDatasetCleaner
+    non_ascii:
+      _target_: cybulde.data_processing.data_cleaners.NonASCIIDatasetCleaner
+    referance:
+      _target_: cybulde.data_processing.data_cleaners.ReferanceToAccountDatasetCleaner
+    re_tweet:
+      _target_: cybulde.data_processing.data_cleaners.ReTweetDatasetCleaner
+dask_cluster:
+  _target_: dask_cloudprovider.gcp.GCPCluster
+  n_workers: 3
+  projectid: mlops-422011
+  zone: asia-south1-c
+  network: default
+  network_projectid: mlops-422011
+  machine_type: e2-medium
+  source_image: projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20220203
+  docker_image: asia-south1-docker.pkg.dev/mlops-422011/cbd/cbd-data-preparation:f72f04ff-3db7-46fc-96ae-1daa82f65b6f
+  docker_args: '--log-driver=gcplogs
+
+    '
+  extra_bootstrap:
+  - gcloud auth configure-docker --quiet asia-south1-docker.pkg.dev
+  ngpus: 0
+  gpu_type: null
+  filesystem_size: 50
+  disk_type: pd-standard
+  on_host_maintenance: MIGRATE
+  worker_class: dask.distributed.Nanny
+  worker_options:
+    nthreads: 1
+  env_vars: {}
+  scheduler_options: {}
+  silence_logs: null
+  asynchronous: null
+  security: true
+  preemptible: false
+  debug: false
+  instance_labels: null
+processed_data_save_dir: gs://cbd_data/data/processed/rebalanced_splits
+run_tag: rebalanced_splits
+docker_image_name: asia-south1-docker.pkg.dev/mlops-422011/cbd/cbd-data-preparation
+docker_image_tag: f72f04ff-3db7-46fc-96ae-1daa82f65b6f
+min_nrof_words: 2

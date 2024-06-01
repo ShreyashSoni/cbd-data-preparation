@@ -5,17 +5,17 @@ import dask.dataframe as dd
 import psutil
 import pandas as pd
 
-from cybulde.utils.utils import run_shell_command
 from cybulde.utils.gcp_utils import access_secret_version
+from cybulde.utils.utils import run_shell_command
 
 
 def get_cmd_to_get_raw_data(
-        version: str,
-        data_local_save_dir: str,
-        dvc_remote_repo: str,
-        dvc_data_folder: str,
-        github_user_name: str,
-        github_access_token: str,
+    version: str,
+    data_local_save_dir: str,
+    dvc_remote_repo: str,
+    dvc_data_folder: str,
+    github_user_name: str,
+    github_access_token: str,
 ) -> str:
     """Get shell command to download the raw data from dvc store
 
@@ -46,12 +46,12 @@ def get_cmd_to_get_raw_data(
 
 
 def get_raw_data_with_version(
-        version: str,
-        data_local_save_dir: str,
-        dvc_remote_repo: str,
-        dvc_data_folder: str,
-        github_user_name: str,
-        github_access_token: str,  
+    version: str,
+    data_local_save_dir: str,
+    dvc_remote_repo: str,
+    dvc_data_folder: str,
+    github_user_name: str,
+    github_access_token: str,
 ) -> None:
     rmtree(data_local_save_dir, ignore_errors=True)
     command = get_cmd_to_get_raw_data(
@@ -111,11 +111,12 @@ def repartition_dataframe(
 
 
 def get_repo_address_with_access_token(
-        gcp_project_id: str,
-        gcp_secret_id: str,
-        repo_address: str,
-        user_name: str
+    gcp_project_id: str, gcp_secret_id: str, repo_address: str, user_name: str
 ) -> str:
     access_token = access_secret_version(gcp_project_id, gcp_secret_id)
     repo_address = repo_address.replace("https://", "")
     return f"https://{user_name}:{access_token}@{repo_address}"
+
+
+def filter_based_on_minimum_number_of_words(df: pd.DataFrame, min_nrof_words: int) -> pd.DataFrame:
+    return df[df["cleaned_text"].str.split().apply(len) >= min_nrof_words]

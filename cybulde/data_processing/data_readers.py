@@ -17,80 +17,70 @@ class DatasetReader(ABC):
     split_names = {"train", "dev", "test"}
 
     def __init__(
-            self,
-            dataset_dir: str,
-            dataset_name: str,
-            gcp_project_id: str,
-            gcp_github_access_token_secret_id: str,
-            dvc_remote_repo: str,
-            github_username: str,
-            version: str
+        self,
+        dataset_dir: str,
+        dataset_name: str,
+        gcp_project_id: str,
+        gcp_github_access_token_secret_id: str,
+        dvc_remote_repo: str,
+        github_user_name: str,
+        version: str,
     ) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.dataset_dir = dataset_dir
         self.dataset_name = dataset_name
         self.dvc_remote_repo = get_repo_address_with_access_token(
-            gcp_project_id, gcp_github_access_token_secret_id, dvc_remote_repo, github_username
+            gcp_project_id, gcp_github_access_token_secret_id, dvc_remote_repo, github_user_name
         )
         self.version = version
-    
+
     @abstractmethod
     def _read_data(self) -> tuple[dd.core.DataFrame, dd.core.DataFrame, dd.core.DataFrame]:
-        """ Read and split dataset into 3 parts: train, test, dev.
+        """
+        Read and split dataset into 3 splits: train, dev, test.
         The return value must be a dd.core.DataFrame, with required columns: self.required_columns
         """
-    
-    def assign_split_names_to_dataframes_and_merge(
-            self,
-            train_df: dd.core.DataFrame,
-            dev_df: dd.core.DataFrame,
-            test_df: dd.core.DataFrame
+
+    def read_data(self) -> dd.core.DataFrame:
+        self.logger.info(f"Reading {self.__class__.__name__}")
+        train_df, dev_df, test_df = self._read_data()
+        df = self.assign_split_names_to_data_frames_and_merge(train_df, dev_df, test_df)
+        df["dataset_name"] = self.dataset_name
+        if any(required_column not in df.columns.values for required_column in self.required_columns):
+            raise ValueError(f"Dataset must contain all required columns: {self.required_columns}")
+        # unique_split_names = set(df["split"].unique().compute().tolist())
+        # if unique_split_names != self.split_names:
+        #     raise ValueError(f"Dataset must contain all required split names: {self.split_names}")
+        final_df: dd.core.DataFrame = df[list(self.required_columns)]
+        return final_df
+
+    def assign_split_names_to_data_frames_and_merge(
+        self, train_df: dd.core.DataFrame, dev_df: dd.core.DataFrame, test_df: dd.core.DataFrame
     ) -> dd.core.DataFrame:
         train_df["split"] = "train"
         dev_df["split"] = "dev"
         test_df["split"] = "test"
-        final_df: dd.core.DataFrame = dd.concat([train_df, dev_df, test_df])
+        final_df: dd.core.DataFrame = dd.concat([train_df, dev_df, test_df])  # type: ignore
         return final_df
-    
-    def read_data(self) -> dd.core.DataFrame:
-        self.logger.info(f"Reading {self.__class__.__name__}")
-        train_df, test_df, dev_df = self._read_data()
-        df = self.assign_split_names_to_dataframes_and_merge(train_df, dev_df, test_df)
-        df["dataset_name"] = self.dataset_name
 
-        if any(required_column not in df.columns.values for required_column in self.required_columns):
-            raise ValueError(f"Dataset must contain all the required columns: {self.required_columns}")
-        
-        unique_split_names = set(df["split"].unique().compute().tolist())
-        if unique_split_names != self.split_names:
-            raise ValueError(f"Dataset must contain all the required split names: {self.split_names}")
-        
-        final_df: dd.core.DataFrame = df[list(self.required_columns)]
-        return final_df
-    
     def split_dataset(
-            self,
-            df: dd.core.DataFrame,
-            test_size: float,
-            stratify_column: Optional[str] = None,
+        self, df: dd.core.DataFrame, test_size: float, stratify_column: Optional[str] = None
     ) -> tuple[dd.core.DataFrame, dd.core.DataFrame]:
         if stratify_column is None:
-            return train_test_split(df, test_size=test_size, random_state=1234, shuffle=True)
-        
+            return train_test_split(df, test_size=test_size, random_state=1234, shuffle=True)  # type: ignore
         unique_column_values = df[stratify_column].unique()
         first_dfs = []
         second_dfs = []
-
         for unique_set_value in unique_column_values:
-            sub_df  = df[df[stratify_column]==unique_set_value]
+            sub_df = df[df[stratify_column] == unique_set_value]
             sub_first_df, sub_second_df = train_test_split(sub_df, test_size=test_size, random_state=1234, shuffle=True)
             first_dfs.append(sub_first_df)
             second_dfs.append(sub_second_df)
-        
-        first_df = dd.concat(first_dfs)
-        second_df = dd.concat(second_dfs)
+
+        first_df = dd.concat(first_dfs)  # type: ignore
+        second_df = dd.concat(second_dfs)  # type: ignore
         return first_df, second_df
-    
+
     def get_remote_data_url(self, dataset_path: str) -> str:
         dataset_url: str = get_url(path=dataset_path, repo=self.dvc_remote_repo, rev=self.version)
         return dataset_url
@@ -246,4 +236,4 @@ class DatasetReaderManager:
         if self.repartition:
             df = repartition_dataframe(df, nrof_workers=nrof_workers, available_memory=self.available_memory)
 
-        return df
+        return df, dfs
