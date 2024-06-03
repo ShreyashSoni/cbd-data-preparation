@@ -25,6 +25,10 @@ bokeh = "~=3.4"
 fastapi = "~=0.111"
 uvicorn = {version = "~=0.29", extras=["standard"]}
 
+# Tokenization
+tokenizers = "~=0.19"
+transformers = "~=4.41.2"
+
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "~=4.2"
 pytest = "~=7.3"
